@@ -19,9 +19,10 @@ def getsites(APIURL,APIKEY,doprint=True, output=False):
                     id
                     name
                     parent_id
-                    scope {
-                        included_urls
-                        excluded_urls
+                    scope_v2 {
+                        start_urls
+                        in_scope_url_prefixes
+                        out_of_scope_url_prefixes
                         protocol_options
                     }
                     scan_configurations{
@@ -75,9 +76,10 @@ def getsitetree(APIURL,APIKEY, urls=None, parent=1,doprint=True, output=False):
                     id
                     name
                     parent_id
-                    scope {
-                        included_urls
-                        excluded_urls
+                    scope_v2 {
+                        start_urls
+                        in_scope_url_prefixes
+                        out_of_scope_url_prefixes
                         protocol_options
                     }
                     scan_configurations{
@@ -130,33 +132,37 @@ def createsite(APIURL,APIKEY, name, urls, parent_id, scan_configuration_ids, pro
     #                 email_recipients: $email_recipients
 
     query = '''
-    mutation CreateSite($name: String!, $parent_id: ID!, $urls: [String!]!, $protocol_options: ScopeProtocolOptions!, $scan_configuration_ids: [ID!], $agentpoolid: ID!, ) {
- 
+    mutation CreateSite($name: String!, $parent_id: ID!, $urls: [String!]!, $protocol_options: ScopeProtocolOptions!, $scan_configuration_ids: [ID!], $agentpoolid: ID) {
+
 
         create_site(
             input: {
                 name: $name
                 parent_id: $parent_id
-                scope: {
-                    included_urls: $urls
+                scope_v2: {
+                    start_urls: $urls
+                    in_scope_url_prefixes: $urls
                     protocol_options: $protocol_options
                 }
                 application_logins: {
-                    login_credentials: [] 
+                    login_credentials: []
                     recorded_logins: []
-                } 
+                }
                 scan_configuration_ids: $scan_configuration_ids
 
                 agent_pool_id: $agentpoolid
-            } 
-            ) 
-        
+                confirm_permission_to_scan: true
+            }
+            )
+
         {
             site {
                 id
                 parent_id
-                scope {
-                    included_urls
+                scope_v2 {
+                    start_urls
+                    in_scope_url_prefixes
+                    out_of_scope_url_prefixes
                     protocol_options
                 }
                 application_logins {
@@ -254,13 +260,15 @@ def renamesite(APIURL,APIKEY, site_id, newname,doprint=True, output=False):
         ) 
         
         {
-            id
-            name
+            site {
+                id
+                name
+            }
         }
     }'''
 
-    variables = { 
-            "siteid": site_id, 
+    variables = {
+            "siteid": site_id,
             "name": newname
     } 
 
@@ -290,8 +298,10 @@ def updatesiteextensions(APIURL, APIKEY, site_id, ids, doprint=True, output=Fals
             site {
                 id
                 parent_id
-                scope {
-                    included_urls
+                scope_v2 {
+                    start_urls
+                    in_scope_url_prefixes
+                    out_of_scope_url_prefixes
                     protocol_options
                 }
                 application_logins {
@@ -418,63 +428,49 @@ def updatesitescanconfiguration(APIURL, APIKEY, site_id, scanconfigids, doprint=
 #
 # Update site scope URLs
 #
-def updatesitescope(APIURL, APIKEY, site_id, included, excluded, protocoloptions, doprint=True, output=False):
+def updatesitescope(APIURL, APIKEY, site_id, included, excluded, protocoloptions, starturls=None, doprint=True, output=False):
 
-    if(len(str(excluded)) > 4):
-        query = '''
-        mutation UpdateSiteScope($siteid: ID!, $included: [String!]!, $excluded: [String!], $protocolops: ScopeProtocolOptions){
-    
-            update_site_scope(
-                input: {
-                    site_id : $siteid
-                    included_urls: $included
-                    excluded_urls: $excluded
+    # Use included URLs as start URLs if not explicitly provided
+    if starturls is None:
+        starturls = included
+
+    query = '''
+    mutation UpdateSiteScopeV2($siteid: ID!, $starturls: [String!]!, $inscopeprefix: [String!], $outscopeprefix: [String!], $protocolops: ScopeProtocolOptions!){
+
+        update_site_scope_v2(
+            input: {
+                site_id : $siteid
+                scope_v2: {
+                    start_urls: $starturls
+                    in_scope_url_prefixes: $inscopeprefix
+                    out_of_scope_url_prefixes: $outscopeprefix
                     protocol_options: $protocolops
-                } 
-            ) 
-    
-            {
-                scope {
-                    included_urls
-                    excluded_urls
+                }
+                confirm_permission_to_scan: true
+            }
+        )
+
+        {
+            site {
+                id
+                name
+                scope_v2 {
+                    start_urls
+                    in_scope_url_prefixes
+                    out_of_scope_url_prefixes
                     protocol_options
                }
             }
-        }'''
-
-        variables = {
-            "siteid": site_id,
-            "included": included,
-            "excluded": excluded,
-            "protocolops": protocoloptions
         }
-    else:
-        query = '''
-        mutation UpdateSiteScope($siteid: ID!, $included: [String!]!, $protocolops: ScopeProtocolOptions){
+    }'''
 
-            update_site_scope(
-                input: {
-                    site_id : $siteid
-                    included_urls: $included
-                    protocol_options: $protocolops
-                } 
-            ) 
-
-            {
-                scope {
-                    included_urls
-                    excluded_urls
-                    protocol_options
-               }
-            }
-        }'''
-
-        variables = {
-            "siteid": site_id,
-            "included": included,
-            "excluded": excluded,
-            "protocolops": protocoloptions
-        }
+    variables = {
+        "siteid": site_id,
+        "starturls": starturls,
+        "inscopeprefix": included,
+        "outscopeprefix": excluded,
+        "protocolops": protocoloptions
+    }
 
     result = bseeptgraphql.dographql(APIURL, APIKEY, query, variables)
 
@@ -494,14 +490,15 @@ def updatesitescopev2(APIURL, APIKEY, site_id, inscopeprefix, outscopeprefix, pr
 
         update_site_scope_v2(
             input: {
-                site_id : $siteid 
+                site_id : $siteid
                 scope_v2: {
                     in_scope_url_prefixes: $inscopeprefix
                     out_of_scope_url_prefixes: $outscopeprefix
                     protocol_options: $protocolops
                     start_urls: $starturls
                 }
-            } 
+                confirm_permission_to_scan: true
+            }
         ) 
 
         {

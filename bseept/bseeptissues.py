@@ -17,7 +17,6 @@ def getissuedetails(APIURL, APIKEY, scanid, issueserialnumber, doprint=True, out
     query getIssue ($scanid: ID!, $serialnumber: ID!) {
         issue (scan_id: $scanid, serial_number: $serialnumber) {
             confidence
-            display_confidence
             serial_number
             severity
             description_html
@@ -111,7 +110,7 @@ def getissuedetails(APIURL, APIKEY, scanid, issueserialnumber, doprint=True, out
 #
 def updatefalsepositive(APIURL, APIKEY, scanid, issueserialnumber, isfalsepositive, propagationmode, doprint=True, output=False):
     query = '''
-    mutation UpdateFalsePositive($scanid: ID!, $serialnumber: ID, $isfalsepositive: Boolean, $propagationmode: FalsePositivePropagationMode) {
+    mutation UpdateFalsePositive($scanid: ID!, $serialnumber: ID, $isfalsepositive: Boolean, $propagationmode: PropagationMode) {
 
         update_false_positive(
             input: {
