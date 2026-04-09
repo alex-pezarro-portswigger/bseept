@@ -452,8 +452,11 @@ def main():
     if(args.command =="deletesite"):                           
         bseeptsites.deletesite(apiurl, apikey, args.siteid)
 
-    if(args.command =="renamesite"):                           
+    if(args.command =="renamesite"):
         bseeptsites.renamesite(apiurl, apikey, args.siteid, args.newname)
+
+    if(args.command =="movesite"):
+        bseeptsites.movesite(apiurl, apikey, args.siteid, args.newparentfolderid)
 
     if(args.command=="updatesitescope"):
         bseeptsites.updatesitescope(apiurl,apikey,args.siteid,args.inscopeurls,args.outscopeurls,args.protocoloptions,args.starturls)

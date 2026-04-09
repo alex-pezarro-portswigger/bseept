@@ -215,6 +215,42 @@ def createsite(APIURL,APIKEY, name, urls, parent_id, scan_configuration_ids, pro
 
 
 #
+# Move a site to a different folder
+#
+def movesite(APIURL,APIKEY, site_id, parent_id, doprint=True, output=False):
+
+    query = '''
+    mutation MoveSite($siteid: ID!, $parentid: ID!) {
+
+        move_site(
+            input: {
+                site_id: $siteid
+                parent_id: $parentid
+            }
+        )
+
+        {
+            site {
+                id
+                name
+                parent_id
+            }
+        }
+    }'''
+
+    variables = {
+            "siteid": site_id,
+            "parentid": parent_id
+    }
+
+    result = bseeptgraphql.dographql(APIURL, APIKEY, query, variables)
+
+    if(doprint is True):
+        print(json.dumps(result))
+    if(output is True):
+        return result
+
+#
 # Delete a site
 #
 def deletesite(APIURL,APIKEY, site_id,doprint=True, output=False):
