@@ -12,7 +12,7 @@ import json
 
 def getevents(APIURL,APIKEY,scan_id,event_type=None,doprint=True, output=False):
 
-    query = '''query GetEventLog ($scan_id: ID!, $type: ScanEventLogType) {
+    query = '''query GetEventLog ($scan_id: ID!, $type: [ScanEventLogType!]) {
         scan_event_log(scan_id: $scan_id, type: $type) {
             entries{
                 type
