@@ -56,7 +56,7 @@ def createsitelogincred(APIURL, APIKEY, id, label, username, password, doprint=T
 def updatesitelogincred(APIURL, APIKEY, id, label, username, password, doprint=True, output=False):
     query = '''
 
-     mutation UpdateSiteLoginCredential($id: ID!, $label: String!, $username: String!, $password: String!) {
+     mutation UpdateSiteLoginCredential($id: ID!, $label: String, $username: String, $password: String) {
         update_site_login_credential(
             input: {
                 id: $id

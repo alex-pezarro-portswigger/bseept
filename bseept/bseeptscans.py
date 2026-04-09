@@ -19,10 +19,14 @@ def getscans(APIURL,APIKEY,doprint=True, output=False):
         scans {
             id
             status
-            site_id
+            scan_target {
+                id
+                name
+                type
+            }
             schedule_item{
                 id
-                site {
+                sites {
                     id
                     name
                 }
@@ -46,6 +50,7 @@ def getscans(APIURL,APIKEY,doprint=True, output=False):
                 scan_phase
                 audit_start_time
                 current_url
+                audit_queue_items_waiting
             }
             scan_failure_message
             scan_delta {
@@ -117,7 +122,6 @@ def getscanissues(APIURL, APIKEY, scan_id,doprint=True, output=False):
                     references_html
                 }
                 confidence
-                display_confidence
                 serial_number
                 severity
                 description_html
@@ -129,7 +133,7 @@ def getscanissues(APIURL, APIKEY, scan_id,doprint=True, output=False):
                     jira_ticket {
                         id
                         external_key
-                        issue_type
+                        ticket_type
                         summary
                         project
                         status

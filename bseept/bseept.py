@@ -117,7 +117,7 @@ def main():
     parser_createsite.add_argument('--siteurls', nargs='+', help='site URLs', required=True)
     parser_createsite.add_argument('--parentfolderid', help='parent folder ID in site tree otherwise defaults to 0', default="0")
     parser_createsite.add_argument('--protocoloptions', help='which protocols are used when scanning the sites URLs', default='USE_SPECIFIED_PROTOCOLS', choices=['USE_SPECIFIED_PROTOCOLS', 'USE_HTTP_AND_HTTPS'])
-    parser_createsite.add_argument('--scanconfigurationids', nargs='+', help='scan configuration IDs to use', required=True)
+    parser_createsite.add_argument('--scanconfigurationids', nargs='+', help='scan configuration IDs to use', required=False)
 
     parser_deletesite = subparsers.add_parser('deletesite', help='Delete a site')
     parser_deletesite.add_argument('--siteid', help='site ID', required=True)
@@ -136,9 +136,10 @@ def main():
 
     parser_updatesitescope = subparsers.add_parser('updatesitescope', help='Update a site scope')
     parser_updatesitescope.add_argument('--siteid', help='site ID', required=True)
-    parser_updatesitescope.add_argument('--includedurls', nargs='+', help='included site URLs', required=True)
-    parser_updatesitescope.add_argument('--excludedurls', nargs='+', help='excluded site URLs', required=True)
+    parser_updatesitescope.add_argument('--inscopeurls', nargs='+', help='in-scope URL prefixes', required=True)
+    parser_updatesitescope.add_argument('--outscopeurls', nargs='+', help='out-of-scope URL prefixes', required=False)
     parser_updatesitescope.add_argument('--protocoloptions', help='which protocols are used when scanning the sites URLs',default='USE_SPECIFIED_PROTOCOLS', choices=['USE_SPECIFIED_PROTOCOLS', 'USE_HTTP_AND_HTTPS'])
+    parser_updatesitescope.add_argument('--starturls', nargs='+', help='start URLs for scanning', required=True)
 
     parser_updatesitescopev2 = subparsers.add_parser('updatesitescopev2', help='Update a site scope v2')
     parser_updatesitescopev2.add_argument('--siteid', help='site ID', required=True)
@@ -195,14 +196,14 @@ def main():
     # Scan schedules
     #
     parser_addscan = subparsers.add_parser('addscanschedule', help='Add a scan schedule')
-    parser_addscan.add_argument('--siteid', help='site ID returned from createsite, --getsites or --getsitetree', required=True)
+    parser_addscan.add_argument('--siteids', nargs='+', help='site IDs returned from createsite, --getsites or --getsitetree', required=True)
     parser_addscan.add_argument('--initialruntime', help='initial run time e.g. 2024-08-19T11:07:25.664Z', required=True)
     parser_addscan.add_argument('--schedule', help='fequency of scan run beyond initial run in RRULE format decribed in RFC5545, RFC5546, and RFC5547.', required=True)
     parser_addscan.add_argument('--scanconfigurationids', nargs='+', help='scan configuration IDs to use', required=True)
 
     parser_updatescanschedule = subparsers.add_parser('updatescanschedule', help='Update a scan schedule')
     parser_updatescanschedule.add_argument('--scanid', help='scan ID returned from addscanedule or --getschedule', required=True)
-    parser_updatescanschedule.add_argument('--siteid', help='site ID returned from createsite, --getsites or --getsitetree', required=True)
+    parser_updatescanschedule.add_argument('--siteids', nargs='+', help='site IDs returned from createsite, --getsites or --getsitetree', required=True)
     parser_updatescanschedule.add_argument('--initialruntime', help='initial run time e.g. 2024-08-19T11:07:25.664Z', required=True)
     parser_updatescanschedule.add_argument('--schedule', help='fequency of scan run beyond initial run in RRULE format decribed in RFC5545, RFC5546, and RFC5547.', required=True)
     parser_updatescanschedule.add_argument('--scanconfigurationids', nargs='+', help='scan configuration IDs to use', required=True)
@@ -338,7 +339,7 @@ def main():
     parser_updatefalsepositive.add_argument('--propigationmode',
                                         help='propigation model for issues marked this way',
                                         default='issue_type_only',
-                                        choices=['issue_type_only', 'issue_type_and_url', 'issue_type_and_current_scan'])
+                                        choices=['none', 'issue_type_only', 'issue_type_and_url', 'issue_type_and_current_scan'])
 
     parser_getissuedetails = subparsers.add_parser('getissuedetails', help='Get details for a specific issue returns by --getscanissues')
     parser_getissuedetails.add_argument('--scanid', help='scan ID', required=True)
@@ -451,11 +452,14 @@ def main():
     if(args.command =="deletesite"):                           
         bseeptsites.deletesite(apiurl, apikey, args.siteid)
 
-    if(args.command =="renamesite"):                           
-        bseeptsites.deletesite(apiurl, apikey, args.siteid, args.newname)
+    if(args.command =="renamesite"):
+        bseeptsites.renamesite(apiurl, apikey, args.siteid, args.newname)
+
+    if(args.command =="movesite"):
+        bseeptsites.movesite(apiurl, apikey, args.siteid, args.newparentfolderid)
 
     if(args.command=="updatesitescope"):
-        bseeptsites.updatesitescope(apiurl,apikey,args.siteid,args.includedurls,args.excludedurls,args.protocoloptions)
+        bseeptsites.updatesitescope(apiurl,apikey,args.siteid,args.inscopeurls,args.outscopeurls,args.protocoloptions,args.starturls)
 
     if (args.command == "updatesitescopev2"):
         bseeptsites.updatesitescopev2(apiurl, apikey, args.siteid, args.inscopeprefix, args.outscopeprefix, args.protocoloptions, args.starturls)
@@ -463,10 +467,10 @@ def main():
     #
     # Scans / Schedules
     if(args.command =="addscanschedule"):
-        bseeptscanschedules.addscanschedule(apiurl, apikey,args.siteid, args.initialruntime, args.schedule, args.scanconfigurationids)
+        bseeptscanschedules.addscanschedule(apiurl, apikey,args.siteids, args.initialruntime, args.schedule, args.scanconfigurationids)
 
     if(args.command =="updatescanschedule"):
-        bseeptscanschedules.updatescanschedule(apiurl, apikey, args.scanid, args.siteid, args.initialruntime, args.schedule, args.scanconfigurationids)
+        bseeptscanschedules.updatescanschedule(apiurl, apikey, args.scanid, args.siteids, args.initialruntime, args.schedule, args.scanconfigurationids)
 
     if(args.command == "deletescanschedule"):
         bseeptscanschedules.deletescanschedule(apiurl, apikey, args.scanid)

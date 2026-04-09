@@ -16,6 +16,7 @@ def getunauthorisedagents(APIURL,APIKEY,doprint=True, output=False):
         query GetUnauthorisedAgents {
             
             unauthorized_agents {
+                machine_id
                 ip
             }
         }

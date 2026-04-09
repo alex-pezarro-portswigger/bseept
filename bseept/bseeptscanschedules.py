@@ -17,7 +17,11 @@ def getscheduleitems(APIURL,APIKEY,doprint=True, output=False, sortby="start", s
         query GetScheduleItems  ($sort_by: SortBy) {
             schedule_items (sort_by: $sort_by) {
                 id
-                site{
+                sites{
+                    id
+                    name
+                }
+                folders{
                     id
                     name
                 }
@@ -46,13 +50,13 @@ def getscheduleitems(APIURL,APIKEY,doprint=True, output=False, sortby="start", s
 #
 # Add a scan schedule
 #
-def addscanschedule(APIURL,APIKEY,siteid, initialruntime, schedule, scan_configuration_ids,doprint=True, output=False ):
+def addscanschedule(APIURL,APIKEY,siteids, initialruntime, schedule, scan_configuration_ids,doprint=True, output=False ):
  
     query = '''
-    mutation CreateScheduleItems  ($id: ID!, $initial_run_time: Timestamp, $schedule: String, $scan_configuration_ids: [ID!]) {
+    mutation CreateScheduleItems  ($ids: [ID!]!, $initial_run_time: Timestamp, $schedule: String, $scan_configuration_ids: [ID!]) {
         create_schedule_item (
             input: {
-                site_id: $id
+                site_ids: $ids
                 schedule: {
                     initial_run_time: $initial_run_time
                     rrule: $schedule
@@ -64,7 +68,7 @@ def addscanschedule(APIURL,APIKEY,siteid, initialruntime, schedule, scan_configu
         {
             schedule_item{
                 id
-                site {
+                sites {
                     id
                     name
                 }
@@ -81,8 +85,8 @@ def addscanschedule(APIURL,APIKEY,siteid, initialruntime, schedule, scan_configu
     }
     '''
 
-    variables = { 
-            "id": siteid, 
+    variables = {
+            "ids": siteids,
             "initial_run_time": initialruntime,
             "schedule": schedule,
             "scan_configuration_ids": scan_configuration_ids
@@ -99,14 +103,14 @@ def addscanschedule(APIURL,APIKEY,siteid, initialruntime, schedule, scan_configu
 #
 # Update a scan schedule
 #
-def updatescanschedule(APIURL,APIKEY,scheduleid, siteid, initialruntime, schedule, scan_configuration_ids,doprint=True, output=False):
+def updatescanschedule(APIURL,APIKEY,scheduleid, siteids, initialruntime, schedule, scan_configuration_ids,doprint=True, output=False):
  
     query = '''
-    mutation UpdateScheduleItems  ($schedule_id: ID!, $site_id: ID, $initial_run_time: Timestamp, $initial_run_time_is_set: Boolean, $schedule: String, $rrule_is_set: Boolean, $scan_configuration_ids: [ID!]) {
+    mutation UpdateScheduleItems  ($schedule_id: ID!, $site_ids: [ID!], $initial_run_time: Timestamp, $initial_run_time_is_set: Boolean, $schedule: String, $rrule_is_set: Boolean, $scan_configuration_ids: [ID!]) {
         update_schedule_item (
             input: {
                 id: $schedule_id
-                site_id: $site_id
+                site_ids: $site_ids
                 schedule: {
                     initial_run_time: $initial_run_time
                     initial_run_time_is_set: $initial_run_time_is_set
@@ -120,8 +124,8 @@ def updatescanschedule(APIURL,APIKEY,scheduleid, siteid, initialruntime, schedul
         {
             schedule_item{
                 id
-                site {
-                    id 
+                sites {
+                    id
                     name
                 }
                 schedule {
@@ -139,13 +143,13 @@ def updatescanschedule(APIURL,APIKEY,scheduleid, siteid, initialruntime, schedul
     }
     '''
 
-    variables = { 
-            "schedule_id": scheduleid, 
-            "site_id": siteid,
+    variables = {
+            "schedule_id": scheduleid,
+            "site_ids": siteids,
             "initial_run_time": initialruntime,
-            "initial_run_time_is_set": "True",
+            "initial_run_time_is_set": True,
             "schedule": schedule,
-            "rrule_is_set": "True",
+            "rrule_is_set": True,
             "scan_configuration_ids": scan_configuration_ids
     } 
 
